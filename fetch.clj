@@ -70,7 +70,7 @@
 (defn area-series [area-id]
   (let [string (fetch-content (series-url area-id))]
     [(extract-meta "Area" string)
-     (for [[year period ttl emp unemp unemp-rate] (extract-table s)
+     (for [[year period ttl emp unemp unemp-rate] (extract-table string)
            :when (not= period "Annual")]
        [(str year " " period)
         (Float/parseFloat (str2/replace unemp-rate #"\(.*\)" ""))])]))
@@ -81,13 +81,28 @@
 (defn merge-series [series-map]
   (let [periods-2d (map #(map first (val %)) series-map)
         period-set (set (reduce #(filter %2 %1) (map set periods-2d)))]
-    {:periods (filter period-set (map first (val (first sm))))
+    {:periods (filter period-set (map first (val (first series-map))))
      :areas (keys series-map)
      :grid (vec (map (fn [series]
                          (vec (map second (filter #(period-set (first %))
                                                   series))))
                      (vals series-map)))}))
 
+(defn write-data [filename data]
+  (with-open [f (java.io.FileWriter. filename)]
+    (binding [*out* f
+              *print-length* nil
+              *print-level* nil]
+      (prn data))))
 
-;(def sm (into {} (map area-series (range 1 4))))
-;(merge-series (into {} (map area-series (range 1 57))))
+(defn read-data [filename]
+  (read (java.io.PushbackReader. (java.io.FileReader. filename))))
+
+(defn write-all-areas []
+  (write-data "data.clj"
+              (merge-series
+                (into {} (filter first (map area-series (range 1 57)))))))
+
+
+;(read-data "data.clj")
+;(def sm (dissoc (into {} (map area-series (range 1 4))) nil))
