@@ -1,7 +1,11 @@
 (ns user
-  (:import [java.net URL]
-           [java.util.regex Pattern])
-  (:require [clojure.contrib.str-utils2 :as str2]))
+  (:import (java.net URL)
+           (java.util.regex Pattern)
+           (java.awt Point Graphics Frame Color)
+           (java.awt.geom AffineTransform)
+           (org.jfree.chart ChartFrame))
+  (:use [clojure.contrib.str-utils2 :as str2 :only ()]
+        [com.markmfredrickson.dejcartes :as chart :only ()]))
 
 ; === URL helpers ===
 
@@ -103,6 +107,21 @@
               (merge-series
                 (into {} (filter first (map area-series (range 1 57)))))))
 
+(defn make-window [title chart]
+  (doto (ChartFrame. title chart)
+    (.pack)
+    (.setVisible true)))
+
+(defn t1 []
+  (let [d (read-data "data.clj")]
+    (make-window "graph"
+      (chart/line "Unemployment" "Date" "Rate"
+                  (apply array-map
+                        (interleave (:periods d)
+                                    (apply map #(into {} (map vector (:areas d)
+                                                              %&)) (:grid
+                                                                     d))))))))
+                        ;(interleave (:periods d) (first (:grid d))))))))
 
 ;(read-data "data.clj")
 ;(def sm (dissoc (into {} (map area-series (range 1 4))) nil))
