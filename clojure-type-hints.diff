@@ -1,0 +1,38 @@
+From cad1b4cd9578eaa9ed7b141d8eb1168cb7a7a2ed Mon Sep 17 00:00:00 2001
+From: Chouser <chouser@n01se.net>
+Date: Sun, 2 Aug 2009 23:55:55 -0400
+Subject: [PATCH] Add type hint to with-loading-context
+
+---
+ src/clj/clojure/core.clj |   14 ++++++++------
+ 1 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/src/clj/clojure/core.clj b/src/clj/clojure/core.clj
+index 50e4d58..8e2ad9e 100644
+--- a/src/clj/clojure/core.clj
++++ b/src/clj/clojure/core.clj
+@@ -3585,13 +3585,15 @@
+ (def gen-class)
+ 
+ (defmacro with-loading-context [& body]
+-  `((fn loading# [] 
+-        (. clojure.lang.Var (pushThreadBindings {clojure.lang.Compiler/LOADER  
+-                                                 (-> loading# .getClass .getClassLoader)}))
++  (let [fn-name (gensym)]
++    `((fn ~fn-name [] 
++        (clojure.lang.Var/pushThreadBindings
++          {clojure.lang.Compiler/LOADER
++           (-> ~(with-meta fn-name {:tag 'Object}) .getClass .getClassLoader)})
+         (try
+-         ~@body
+-         (finally
+-          (. clojure.lang.Var (popThreadBindings)))))))
++          ~@body
++          (finally
++            (clojure.lang.Var/popThreadBindings)))))))
+ 
+ (defmacro ns
+   "Sets *ns* to the namespace named by name (unevaluated), creating it
+-- 
+1.6.0.4
+

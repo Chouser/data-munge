@@ -1,11 +1,14 @@
-(ns user
+(set! *warn-on-reflection* true)
+(ns net.n01se.unemployment-explorer
   (:import (java.net URL)
            (java.util.regex Pattern)
            (java.awt Point Graphics Frame Color)
            (java.awt.geom AffineTransform)
-           (org.jfree.chart ChartFrame))
+           (javax.swing JFrame)
+           (org.jfree.chart ChartPanel))
   (:use [clojure.contrib.str-utils2 :as str2 :only ()]
-        [com.markmfredrickson.dejcartes :as chart :only ()]))
+        [com.markmfredrickson.dejcartes :as chart :only ()])
+  (:gen-class :extends java.applet.Applet))
 
 ; === URL helpers ===
 
@@ -59,7 +62,7 @@
           "series_id" (format "LAUST%02d000003" state-id)})))
 
 (defn fetch-content [url-str]
-  (let [stream (.getContent (URL. url-str))]
+  (let [#^java.io.InputStream stream (.getContent (URL. url-str))]
     (apply str (map char (take-while #(>= % 0) (repeatedly #(.read stream)))))))
 
 (defn extract-table [s]
@@ -93,13 +96,13 @@
                      (vals series-map)))}))
 
 (defn write-data [filename data]
-  (with-open [f (java.io.FileWriter. filename)]
+  (with-open [f (java.io.FileWriter. #^String filename)]
     (binding [*out* f
               *print-length* nil
               *print-level* nil]
       (prn data))))
 
-(defn read-data [filename]
+(defn read-data [#^String filename]
   (read (java.io.PushbackReader. (java.io.FileReader. filename))))
 
 (defn write-all-areas []
@@ -107,21 +110,25 @@
               (merge-series
                 (into {} (filter first (map area-series (range 1 57)))))))
 
-(defn make-window [title chart]
-  (doto (ChartFrame. title chart)
-    (.pack)
-    (.setVisible true)))
-
-(defn t1 []
+(defn panel []
   (let [d (read-data "data.clj")]
-    (make-window "graph"
+    (ChartPanel.
       (chart/line "Unemployment" "Date" "Rate"
                   (apply array-map
                         (interleave (:periods d)
                                     (apply map #(into {} (map vector (:areas d)
                                                               %&)) (:grid
                                                                      d))))))))
-                        ;(interleave (:periods d) (first (:grid d))))))))
+(defn go []
+  (doto (JFrame. "demo")
+    (.setContentPane (panel))
+    .pack
+    (.setVisible true)))
 
 ;(read-data "data.clj")
 ;(def sm (dissoc (into {} (map area-series (range 1 4))) nil))
+
+(defn -start
+  "Applet entrypoint.  Start drawing"
+  [this]
+  (go this))

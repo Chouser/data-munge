@@ -1,0 +1,82 @@
+From 1ac22493deef94853615ddaf5b2e24b4cfe721fe Mon Sep 17 00:00:00 2001
+From: Chouser <chouser@n01se.net>
+Date: Sun, 2 Aug 2009 23:59:45 -0400
+Subject: [PATCH] java-utils: add type hints
+
+---
+ src/clojure/contrib/java_utils.clj |   14 +++++++-------
+ src/clojure/contrib/lazy_xml.clj   |    4 ++--
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/src/clojure/contrib/java_utils.clj b/src/clojure/contrib/java_utils.clj
+index ea6ab90..30408f8 100644
+--- a/src/clojure/contrib/java_utils.clj
++++ b/src/clojure/contrib/java_utils.clj
+@@ -64,10 +64,10 @@
+    Building block for clojure.contrib.java-utils/file."
+   class)
+ 
+-(defmethod relative-path-string String [s]
++(defmethod relative-path-string String [#^String s]
+   (relative-path-string (File. s)))
+ 
+-(defmethod relative-path-string File [f]
++(defmethod relative-path-string File [#^File f]
+   (if (.isAbsolute f)
+     (throw (IllegalArgumentException. (str f " is not a relative path")))
+     (.getPath f)))
+@@ -77,15 +77,15 @@
+    for clojure.contrib.java-utils/file, which you should prefer
+    in most cases."
+   class)
+-(defmethod as-file String [s] (File. s))
++(defmethod as-file String [#^String s] (File. s))
+ (defmethod as-file File [f] f)
+ 
+-(defn file
++(defn #^File file
+   "Returns a java.io.File from string or file args."
+   ([arg]                      
+      (as-file arg))
+   ([parent child]             
+-     (File. (as-file parent) (relative-path-string child)))
++     (File. #^File (as-file parent) #^String (relative-path-string child)))
+   ([parent child & more]
+      (reduce file (file parent child) more)))
+ 
+@@ -131,7 +131,7 @@
+ 
+ 
+ ; Not there is no corresponding props->map. Just destructure!
+-(defn as-properties
++(defn #^Properties as-properties
+   "Convert any seq of pairs to a java.utils.Properties instance.
+    Uses as-str to convert both keys and values into strings."
+   {:tag Properties}
+@@ -155,7 +155,7 @@
+   ([m file-able comments]
+     (with-open [f (java.io.FileOutputStream. (file file-able))]
+       (doto (as-properties m)
+-        (.store f comments)))))
++        (.store #^java.io.OutputStream f #^String comments)))))
+ 
+ (defmulti
+   #^{:doc "Coerces argument (URL, URI, or String) to a java.net.URL."
+diff --git a/src/clojure/contrib/lazy_xml.clj b/src/clojure/contrib/lazy_xml.clj
+index 8b385b9..e38722d 100644
+--- a/src/clojure/contrib/lazy_xml.clj
++++ b/src/clojure/contrib/lazy_xml.clj
+@@ -52,8 +52,8 @@
+   ([s startparse queue-size]
+    (let [s (if (instance? Reader s) (InputSource. s) s)
+          f (fn filler-func [fill]
+-             (startparse s (proxy [DefaultHandler] []
+-               (startElement [uri local-name q-name #^Attributes atts]
++             (startparse s (new [DefaultHandler]
++               (startElement [uri local-name q-name atts]
+                  ;(prn :start-element q-name)(flush)
+                  (let [attrs (into {} (for [i (range (.getLength atts))]
+                                            [(keyword (.getQName atts i))
+-- 
+1.6.0.4
+

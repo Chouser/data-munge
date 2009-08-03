@@ -1,0 +1,116 @@
+From 2ba9370a5a19b6919d76676cb89bb68887acc6ed Mon Sep 17 00:00:00 2001
+From: Chouser <chouser@n01se.net>
+Date: Sun, 2 Aug 2009 22:31:55 -0400
+Subject: [PATCH] update clojure.test
+
+---
+ src/com/markmfredrickson/dejcartes.clj |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/com/markmfredrickson/dejcartes.clj b/src/com/markmfredrickson/dejcartes.clj
+index b6717ab..bfba68c 100644
+--- a/src/com/markmfredrickson/dejcartes.clj
++++ b/src/com/markmfredrickson/dejcartes.clj
+@@ -17,7 +17,7 @@
+ 
+ (ns com.markmfredrickson.dejcartes
+   (:refer-clojure)
+-  (:use clojure.contrib.test-is clojure.contrib.seq-utils)
++  (:use clojure.test clojure.contrib.seq-utils)
+   (:import 
+     (org.jfree.chart JFreeChart ChartFactory ChartFrame)
+     (org.jfree.chart.plot PlotOrientation)
+@@ -149,7 +149,7 @@
+ 
+ (deftest test-cat-data-plots
+   (let [cat {"Emacs" 20 "Vi" 30 "Eclipse" 5}]
+-    (are (instance? JFreeChart _1)
++    (are [x] (instance? JFreeChart x)
+       (bar "Bar Chart" "cat axis" "value axis" cat)
+       (area "Area chart" "cat axis" "value axis" cat)
+       (stacked-area "Area chart" "cat axis" "value axis" cat)
+@@ -225,7 +225,7 @@
+ 
+ (deftest xy-dataset-test
+   (let [xy-data {"Series 1" '((1 2) (3 4) (4 2)) "Series 2" '((3 4) (2 3) (3 4))}]
+-    (are (instance? JFreeChart _1)
++    (are [x] (instance? JFreeChart x)
+       (scatter "scatter chart" "x-axis" "y-axis" xy-data)
+       (polar "polar chart" xy-data)
+       (xy-bar "title" "x axis" false "y axis" xy-data)
+-- 
+1.6.0.4
+
+
+From 266703a7baac6e142ee5fe71b6bbde2fbce5d8dc Mon Sep 17 00:00:00 2001
+From: Chouser <chouser@n01se.net>
+Date: Sun, 2 Aug 2009 23:04:15 -0400
+Subject: [PATCH] Add type hints to avoid runtime reflection.
+
+---
+ src/com/markmfredrickson/dejcartes.clj |   19 ++++++++++---------
+ 1 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/src/com/markmfredrickson/dejcartes.clj b/src/com/markmfredrickson/dejcartes.clj
+index bfba68c..a58c2bc 100644
+--- a/src/com/markmfredrickson/dejcartes.clj
++++ b/src/com/markmfredrickson/dejcartes.clj
+@@ -52,9 +52,9 @@
+ ; createWaferMapChart
+ 
+ ;;; Vars to control some default plotting behaviors ;;;
+-(def *legend* true)
+-(def *tooltips* true)
+-(def *urls* false)
++(def #^Boolean *legend* true)
++(def #^Boolean *tooltips* true)
++(def #^Boolean *urls* false)
+ (def *orientation* PlotOrientation/VERTICAL)
+ 
+ ;;; Helper Stuff ;;;
+@@ -77,7 +77,7 @@
+   "Internal function to convert from a sequence of pairs into a pie chart dataset"
+   ([data]
+     (let [pds (new DefaultPieDataset)]
+-      (doseq [i data] (.setValue pds (first i) (second i)))
++      (doseq [i data] (.setValue pds #^Comparable (first i) #^Number (second i)))
+       pds))
+   {:test (fn []
+     (is (instance? PieDataset (pie-dataset {"Hello" 123 "World" 456}))))})
+@@ -88,7 +88,7 @@
+    e.g. => (pie \"This is the Title\" '((\"Emacs\" 20) (\"Vi\" 15) (\"Eclipse\" 30)))"
+   ([title pairs] 
+     (ChartFactory/createPieChart 
+-      title (pie-dataset pairs) *legend* *tooltips* *urls*))
++      #^String title #^PieDataset (pie-dataset pairs) *legend* *tooltips* *urls*))
+   {:test (fn []
+     (let [test-chart (pie "Test Title" '(("Emacs" 20) ("Vi" 15) ("Eclipse" 30)))] 
+       (is (instance? JFreeChart test-chart))))})
+@@ -97,11 +97,11 @@
+   "Internal data to create category datasets"
+   ([seqs]
+     (let [cat (new DefaultCategoryDataset)]
+-      (doseq [[title data] seqs]
++      (doseq [[#^Comparable title #^Number data] seqs]
+         (if (coll? data)
+-          (doseq [[idx v] (indexed data)]
++          (doseq [[#^Comparable idx #^Number v] (indexed data)]
+             (if (coll? v)
+-              (.addValue cat (second v) (first v) title)
++              (.addValue cat #^Number (second v) #^Comparable (first v) title)
+               (.addValue cat v idx title)))
+           (.addValue cat data 0 title)))
+       cat))
+@@ -161,7 +161,8 @@
+   "Internal function to make an XYSeries out of a title and seq"
+   ([title sequence]
+     (let [xys (new XYSeries title)]
+-      (doseq [pair sequence] (.add xys (first pair) (second pair)))
++      (doseq [pair sequence]
++        (.add xys #^Number (first pair) #^Number (second pair)))
+       xys))
+   {:test (fn []
+     (is (instance? XYSeries (xy-series :title '((1 2) (3 4) (4 5))))))})
+-- 
+1.6.0.4
+
