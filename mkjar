@@ -1,8 +1,14 @@
 #!/bin/bash
+JARS=/usr/share/java/jfreechart.jar:/usr/share/java/jcommon.jar
+CP=../clojure/clojure.jar:../clojure-contrib/src:src:classes:../../build/dejcartes-snapshot/src/:$JARS  
+
 mkdir -p classes
 rm -r classes/*
-java -cp ../clojure/clojure.jar:../clojure-contrib/src:src:classes -Dclojure.compile.path=classes clojure.lang.Compile net.n01se.unemployment-explorer
-cp -a ~/proj/clojure/classes/clojure classes
-( cd classes && jar xf /usr/share/java/jfreechart.jar )
-( cd classes && jar xf /usr/share/java/jcommon.jar )
+java -cp $CP -Dclojure.compile.path=classes clojure.lang.Compile net.n01se.unemployment-explorer
+cp -a data.clj classes
+cp -a ../clojure/classes/clojure classes
+cp -a ../clojure/src/clj/clojure/version.properties classes/clojure
+for jar in ${JARS//:/ }; do 
+    ( cd classes && jar xf $jar )
+done
 jar cf unempexp.jar -C classes/ .

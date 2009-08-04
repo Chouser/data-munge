@@ -103,7 +103,8 @@
       (prn data))))
 
 (defn read-data [#^String filename]
-  (read (java.io.PushbackReader. (java.io.FileReader. filename))))
+  (-> (clojure.lang.RT/baseLoader) (.getResourceAsStream filename)
+      java.io.InputStreamReader. java.io.PushbackReader. read))
 
 (defn write-all-areas []
   (write-data "data.clj"
