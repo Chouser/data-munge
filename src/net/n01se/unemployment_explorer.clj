@@ -131,5 +131,5 @@
 
 (defn -start
   "Applet entrypoint.  Start drawing"
-  [this]
-  (go this))
+  [#^java.applet.Applet this]
+  (.add this #^java.awt.Component (panel)))
