@@ -119,7 +119,7 @@
                                     (apply map #(into {} (map vector (:areas d)
                                                               %&)) (:grid
                                                                      d))))))))
-(defn go []
+(defn go [outer]
   (doto (JFrame. "demo")
     (.setContentPane (panel))
     .pack

@@ -1,12 +1,8 @@
-From 1ac22493deef94853615ddaf5b2e24b4cfe721fe Mon Sep 17 00:00:00 2001
-From: Chouser <chouser@n01se.net>
-Date: Sun, 2 Aug 2009 23:59:45 -0400
-Subject: [PATCH] java-utils: add type hints
+commit 0ac07580f92c0133a8bb0cec4eefa25813784381
+Author: Chouser <chouser@n01se.net>
+Date:   Sun Aug 2 23:59:45 2009 -0400
 
----
- src/clojure/contrib/java_utils.clj |   14 +++++++-------
- src/clojure/contrib/lazy_xml.clj   |    4 ++--
- 2 files changed, 9 insertions(+), 9 deletions(-)
+    java-utils: add type hints
 
 diff --git a/src/clojure/contrib/java_utils.clj b/src/clojure/contrib/java_utils.clj
 index ea6ab90..30408f8 100644
@@ -77,6 +73,25 @@ index 8b385b9..e38722d 100644
                   ;(prn :start-element q-name)(flush)
                   (let [attrs (into {} (for [i (range (.getLength atts))]
                                             [(keyword (.getQName atts i))
--- 
-1.6.0.4
-
+diff --git a/src/clojure/contrib/seq_utils.clj b/src/clojure/contrib/seq_utils.clj
+index d4c29c4..0cd47de 100644
+--- a/src/clojure/contrib/seq_utils.clj
++++ b/src/clojure/contrib/seq_utils.clj
+@@ -145,7 +145,7 @@
+ (defn shuffle
+   "Return a random permutation of coll"
+   [coll]
+-  (let [l (java.util.ArrayList. coll)]
++  (let [l (java.util.ArrayList. #^java.util.Collection coll)]
+     (java.util.Collections/shuffle l)
+     (seq l)))
+ 
+@@ -186,7 +186,7 @@
+   ([filler-func & optseq]
+     (let [opts (apply array-map optseq)
+           apoll (:alive-poll opts 1)
+-          q (LinkedBlockingQueue. (:queue-size opts 1))
++          q (LinkedBlockingQueue. (int (:queue-size opts 1)))
+           NIL (Object.) ;nil sentinel since LBQ doesn't support nils
+           weak-target (Object.)
+           alive? (WeakReference. weak-target)

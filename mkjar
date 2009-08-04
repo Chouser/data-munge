@@ -1,0 +1,8 @@
+#!/bin/bash
+mkdir -p classes
+rm -r classes/*
+java -cp ../clojure/clojure.jar:../clojure-contrib/src:src:classes -Dclojure.compile.path=classes clojure.lang.Compile net.n01se.unemployment-explorer
+cp -a ~/proj/clojure/classes/clojure classes
+( cd classes && jar xf /usr/share/java/jfreechart.jar )
+( cd classes && jar xf /usr/share/java/jcommon.jar )
+jar cf unempexp.jar -C classes/ .
