@@ -5,7 +5,7 @@
            (java.awt Point Graphics Color Container GridBagLayout
                      GridBagConstraints)
            (java.awt.geom AffineTransform)
-           (javax.swing JFrame JCheckBox)
+           (javax.swing JFrame JCheckBox JComboBox JLabel)
            (java.awt.event ActionListener)
            (org.jfree.chart ChartPanel))
   (:use [clojure.contrib.str-utils2 :as str2 :only ()]
@@ -127,18 +127,24 @@
              (interleave
                (:periods data) (apply map filter-area (:grid data)))))))
 
-(defn toggle [i show data #^ChartPanel chart-panel]
+(defn toggle [i show data #^ChartPanel chart-panel #^JComboBox cbox]
   (dosync
     (if show
       (alter areas-shown conj i)
       (alter areas-shown disj i)))
+  (if show
+    (.addItem cbox (nth (:areas data) i))
+    (.removeItem cbox (nth (:areas data) i)))
   (.setChart chart-panel (make-chart data)))
 
 (defn #^Container ui []
   (let [d (read-data "data.clj")
         group (Container.)
         l (GridBagLayout.)
-        cp (ChartPanel. (make-chart d))]
+        cp (ChartPanel. (make-chart d))
+        cbox-lbl (JLabel. "Use as baseline:")
+        cbox (JComboBox.)]
+    (.addItem cbox "No baseline")
 
     ; Lay out ChartPanel
     (let [c (GridBagConstraints.)]
@@ -149,18 +155,29 @@
       (.setConstraints l cp c)
       (.add group cp))
 
+    ; Lay out baseline selector
+    (let [c (GridBagConstraints.)]
+      (set! (.fill c) GridBagConstraints/BOTH)
+      (.setConstraints l cbox-lbl c)
+      (.add group cbox-lbl)
+      (set! (.gridwidth c) GridBagConstraints/REMAINDER)
+      (.setConstraints l cbox c)
+      (.add group cbox))
+
     ; Lay out checkboxes
     (doseq [[i txt] (indexed (:areas d))]
       (let [cb (JCheckBox. #^String txt)
             c (GridBagConstraints.)]
         (.addActionListener cb (proxy [ActionListener] []
                                  (actionPerformed [e]
-                                   (toggle i (.isSelected cb) d cp))))
+                                   (toggle i (.isSelected cb) d cp cbox))))
         (set! (.fill c) GridBagConstraints/BOTH)
+        (set! (.weightx c) 0.0)
         (when (zero? (rem (inc i) 4))
           (set! (.gridwidth c) GridBagConstraints/REMAINDER))
         (when (@areas-shown i)
-          (.setSelected cb true))
+          (.setSelected cb true)
+          (.addItem cbox txt))
         (.setConstraints l cb c)
         (.add group cb)))
     (.setLayout group l)
