@@ -6,6 +6,7 @@
                      GridBagConstraints)
            (java.awt.geom AffineTransform)
            (javax.swing JFrame JCheckBox)
+           (java.awt.event ActionListener)
            (org.jfree.chart ChartPanel))
   (:use [clojure.contrib.str-utils2 :as str2 :only ()]
         [clojure.contrib.seq-utils :only (indexed)]
@@ -113,33 +114,53 @@
               (merge-series
                 (into {} (filter first (map area-series (range 1 57)))))))
 
-(defn #^Container chart-panel [data]
-  (ChartPanel.
+(def areas-shown (ref #{0 1 2}))
+
+(defn make-chart [data]
+  (letfn [(filter-area [& area-values]
+            (into {} (map vector
+                          (map (vec (:areas data)) @areas-shown)
+                          (map (vec area-values) @areas-shown))))]
     (chart/line
       "Unemployment" "Date" "Rate"
       (apply array-map
-             (interleave (:periods data)
-                         (apply map #(into {} (map vector (:areas data) %&))
-                                (:grid data)))))))
+             (interleave
+               (:periods data) (apply map filter-area (:grid data)))))))
+
+(defn toggle [i show data #^ChartPanel chart-panel]
+  (dosync
+    (if show
+      (alter areas-shown conj i)
+      (alter areas-shown disj i)))
+  (.setChart chart-panel (make-chart data)))
 
 (defn #^Container ui []
   (let [d (read-data "data.clj")
         group (Container.)
-        l (GridBagLayout.)]
-    (let [c (GridBagConstraints.)
-          cp (chart-panel d)]
+        l (GridBagLayout.)
+        cp (ChartPanel. (make-chart d))]
+
+    ; Lay out ChartPanel
+    (let [c (GridBagConstraints.)]
       (set! (.fill c) GridBagConstraints/BOTH)
       (set! (.gridwidth c) GridBagConstraints/REMAINDER)
       (set! (.weightx c) 2.0)
       (set! (.weighty c) 2.0)
       (.setConstraints l cp c)
       (.add group cp))
-    (doseq [[i txt] (indexed (sort (:areas d)))]
+
+    ; Lay out checkboxes
+    (doseq [[i txt] (indexed (:areas d))]
       (let [cb (JCheckBox. #^String txt)
             c (GridBagConstraints.)]
+        (.addActionListener cb (proxy [ActionListener] []
+                                 (actionPerformed [e]
+                                   (toggle i (.isSelected cb) d cp))))
         (set! (.fill c) GridBagConstraints/BOTH)
         (when (zero? (rem (inc i) 4))
           (set! (.gridwidth c) GridBagConstraints/REMAINDER))
+        (when (@areas-shown i)
+          (.setSelected cb true))
         (.setConstraints l cb c)
         (.add group cb)))
     (.setLayout group l)
