@@ -2,13 +2,15 @@
 (ns net.n01se.unemployment-explorer
   (:import (java.net URL)
            (java.util.regex Pattern)
-           (java.awt Point Graphics Frame Color)
+           (java.awt Point Graphics Color Container GridBagLayout
+                     GridBagConstraints)
            (java.awt.geom AffineTransform)
-           (javax.swing JFrame)
+           (javax.swing JFrame JCheckBox)
            (org.jfree.chart ChartPanel))
   (:use [clojure.contrib.str-utils2 :as str2 :only ()]
+        [clojure.contrib.seq-utils :only (indexed)]
         [com.markmfredrickson.dejcartes :as chart :only ()])
-  (:gen-class :extends java.applet.Applet))
+  (:gen-class :extends java.applet.Applet :main true :post-init post-init))
 
 ; === URL helpers ===
 
@@ -111,25 +113,48 @@
               (merge-series
                 (into {} (filter first (map area-series (range 1 57)))))))
 
-(defn panel []
-  (let [d (read-data "data.clj")]
-    (ChartPanel.
-      (chart/line "Unemployment" "Date" "Rate"
-                  (apply array-map
-                        (interleave (:periods d)
-                                    (apply map #(into {} (map vector (:areas d)
-                                                              %&)) (:grid
-                                                                     d))))))))
-(defn go [outer]
-  (doto (JFrame. "demo")
-    (.setContentPane (panel))
+(defn #^Container chart-panel [data]
+  (ChartPanel.
+    (chart/line
+      "Unemployment" "Date" "Rate"
+      (apply array-map
+             (interleave (:periods data)
+                         (apply map #(into {} (map vector (:areas data) %&))
+                                (:grid data)))))))
+
+(defn #^Container ui []
+  (let [d (read-data "data.clj")
+        group (Container.)
+        l (GridBagLayout.)]
+    (let [c (GridBagConstraints.)
+          cp (chart-panel d)]
+      (set! (.fill c) GridBagConstraints/BOTH)
+      (set! (.gridwidth c) GridBagConstraints/REMAINDER)
+      (set! (.weightx c) 2.0)
+      (set! (.weighty c) 2.0)
+      (.setConstraints l cp c)
+      (.add group cp))
+    (doseq [[i txt] (indexed (sort (:areas d)))]
+      (let [cb (JCheckBox. #^String txt)
+            c (GridBagConstraints.)]
+        (set! (.fill c) GridBagConstraints/BOTH)
+        (when (zero? (rem (inc i) 4))
+          (set! (.gridwidth c) GridBagConstraints/REMAINDER))
+        (.setConstraints l cb c)
+        (.add group cb)))
+    (.setLayout group l)
+    group))
+
+(defn -main
+  "Standalone app entrypoint."
+  []
+  (doto (JFrame. "Unemployment Explorer")
+    (.setContentPane (ui))
     .pack
     (.setVisible true)))
 
-;(read-data "data.clj")
-;(def sm (dissoc (into {} (map area-series (range 1 4))) nil))
-
-(defn -start
-  "Applet entrypoint.  Start drawing"
+(defn -post-init
+  "Applet entrypoint."
   [#^java.applet.Applet this]
-  (.add this #^java.awt.Component (panel)))
+  (.add this (ui)))
+
