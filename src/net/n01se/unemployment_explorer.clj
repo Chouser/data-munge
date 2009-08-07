@@ -115,17 +115,31 @@
                 (into {} (filter first (map area-series (range 1 57)))))))
 
 (def areas-shown (ref #{0 1 2}))
+(def baseline (ref nil))
 
 (defn make-chart [data]
   (letfn [(filter-area [& area-values]
             (into {} (map vector
                           (map (vec (:areas data)) @areas-shown)
-                          (map (vec area-values) @areas-shown))))]
-    (chart/line
-      "Unemployment" "Date" "Rate"
-      (apply array-map
-             (interleave
-               (:periods data) (apply map filter-area (:grid data)))))))
+                          (map (vec area-values) @areas-shown))))
+          (filter-area-base [base & area-values]
+            (into {} (map vector
+                          (map (vec (:areas data)) @areas-shown)
+                          (map #(* 100 (/ % base))
+                               (map (vec area-values) @areas-shown)))))]
+    (if (and @baseline (< -1 (.indexOf #^java.util.List (:areas data) @baseline)))
+      (let [baserate (nth (:grid data)
+                          (.indexOf #^java.util.List (:areas data) @baseline))]
+        (chart/line
+          "Unemployment" "Date" (str "Percentage of " @baseline)
+          (apply array-map
+                (interleave
+                  (:periods data) (apply map filter-area-base baserate (:grid data))))))
+      (chart/line
+        "Unemployment" "Date" "Rate (%)"
+        (apply array-map
+              (interleave
+                (:periods data) (apply map filter-area (:grid data))))))))
 
 (defn toggle [i show data #^ChartPanel chart-panel #^JComboBox cbox]
   (dosync
@@ -162,7 +176,13 @@
       (.add group cbox-lbl)
       (set! (.gridwidth c) GridBagConstraints/REMAINDER)
       (.setConstraints l cbox c)
-      (.add group cbox))
+      (.add group cbox)
+      (.addActionListener cbox (proxy [ActionListener] []
+                                 (actionPerformed [e]
+                                   (dosync
+                                     (ref-set baseline
+                                              (.getSelectedItem cbox)))
+                                   (.setChart cp (make-chart d))))))
 
     ; Lay out checkboxes
     (doseq [[i txt] (indexed (:areas d))]

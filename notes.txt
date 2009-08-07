@@ -2,6 +2,12 @@ To do:
 - States in sorted order
 - Color checkbox text instead of graph legend
 - Avoid changing state color when adding/removing others
+- Logarithmic scale for percentages
+- Keep baseline list in sorted order
+- Add other kinds of data
+- Fix date lables
+- Tidy up web page
+- Minimize jar size
 
 Other options:
 
