@@ -1,5 +1,4 @@
 To do:
-- States in sorted order
 - Color checkbox text instead of graph legend
 - Avoid changing state color when adding/removing others
 - Logarithmic scale for percentages

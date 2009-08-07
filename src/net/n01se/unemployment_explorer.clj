@@ -117,42 +117,37 @@
 (def areas-shown (ref #{0 1 2}))
 (def baseline (ref nil))
 
-(defn make-chart [data]
-  (letfn [(filter-area [& area-values]
-            (into {} (map vector
-                          (map (vec (:areas data)) @areas-shown)
-                          (map (vec area-values) @areas-shown))))
-          (filter-area-base [base & area-values]
-            (into {} (map vector
-                          (map (vec (:areas data)) @areas-shown)
-                          (map #(* 100 (/ % base))
-                               (map (vec area-values) @areas-shown)))))]
-    (if (and @baseline (< -1 (.indexOf #^java.util.List (:areas data) @baseline)))
-      (let [baserate (nth (:grid data)
-                          (.indexOf #^java.util.List (:areas data) @baseline))]
-        (chart/line
-          "Unemployment" "Date" (str "Percentage of " @baseline)
-          (apply array-map
-                (interleave
-                  (:periods data) (apply map filter-area-base baserate (:grid data))))))
-      (chart/line
-        "Unemployment" "Date" "Rate (%)"
-        (apply array-map
-              (interleave
-                (:periods data) (apply map filter-area (:grid data))))))))
+(defn area-num [data]
+  (zipmap (:areas data) (iterate inc 0)))
 
-(defn toggle [i show data #^ChartPanel chart-panel #^JComboBox cbox]
+(defn make-chart [data]
+  (let [base-num ((area-num data) @baseline)
+        scale-title (if base-num (str "Percentage of " @baseline) "Rate %")
+        baserate (if base-num (nth (:grid data) base-num) (repeat nil))]
+    (letfn [(filter-area [base & area-values]
+              (into {} (map vector
+                            (map (vec (:areas data)) @areas-shown)
+                            (map #(if base (/ % base 0.01) %)
+                                (map (vec area-values) @areas-shown)))))]
+      (chart/line
+        "Unemployment" "Date" scale-title
+        (apply array-map
+               (interleave (:periods data)
+                           (apply map filter-area baserate (:grid data))))))))
+
+(defn toggle [i txt show data #^ChartPanel chart-panel #^JComboBox cbox]
   (dosync
     (if show
       (alter areas-shown conj i)
       (alter areas-shown disj i)))
   (if show
-    (.addItem cbox (nth (:areas data) i))
-    (.removeItem cbox (nth (:areas data) i)))
+    (.addItem cbox txt)
+    (.removeItem cbox txt))
   (.setChart chart-panel (make-chart data)))
 
 (defn #^Container ui []
   (let [d (read-data "data.clj")
+        area-nums (area-num d)
         group (Container.)
         l (GridBagLayout.)
         cp (ChartPanel. (make-chart d))
@@ -185,17 +180,17 @@
                                    (.setChart cp (make-chart d))))))
 
     ; Lay out checkboxes
-    (doseq [[i txt] (indexed (:areas d))]
+    (doseq [[i txt] (indexed (sort (:areas d)))]
       (let [cb (JCheckBox. #^String txt)
             c (GridBagConstraints.)]
         (.addActionListener cb (proxy [ActionListener] []
                                  (actionPerformed [e]
-                                   (toggle i (.isSelected cb) d cp cbox))))
+                                   (toggle (area-nums txt) txt (.isSelected cb) d cp cbox))))
         (set! (.fill c) GridBagConstraints/BOTH)
         (set! (.weightx c) 0.0)
         (when (zero? (rem (inc i) 4))
           (set! (.gridwidth c) GridBagConstraints/REMAINDER))
-        (when (@areas-shown i)
+        (when (@areas-shown (area-nums txt))
           (.setSelected cb true)
           (.addItem cbox txt))
         (.setConstraints l cb c)
