@@ -126,23 +126,24 @@
 
 (defn str-to-Month [string]
   (let [date (.parse month-fmt string)]
-    (Month. (inc (.getMonth date)) (+ 1900 (.getYear date)))))
+    (Month. (inc (.getMonth date)) (+ (int 1900) (.getYear date)))))
 
 (defn make-chart [data]
   (let [base-num ((area-num data) @baseline)
         scale-title (if base-num (str "Percentage of " @baseline) "Rate %")
-        baserate (if base-num (nth (:grid data) base-num) (repeat nil))]
+        baserate (if base-num (nth (:grid data) base-num) (repeat nil))
+        months (map str-to-Month (:periods data))]
     (letfn [(filter-area [base & area-values]
               (into {} (map vector
                             (map (vec (:areas data)) @areas-shown)
                             (map #(if base (/ % base 0.01) %)
                                 (map (vec area-values) @areas-shown)))))]
       (chart/time-series-chart
-        "Unemployment" "Date" scale-title
+        "Unemployment" nil scale-title
         (apply array-map
-               (interleave (:areas data)
-                           (map #(map vector (map str-to-Month (:periods data)) %)
-                                (:grid data))))))))
+               (interleave (map (vec (:areas data)) @areas-shown)
+                           (map #(map vector months %)
+                                (map (:grid data) @areas-shown))))))))
 
 (defn toggle [i txt show data #^ChartPanel chart-panel #^JComboBox cbox]
   (dosync
