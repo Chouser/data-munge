@@ -4,7 +4,6 @@ To do:
 - Logarithmic scale for percentages
 - Keep baseline list in sorted order
 - Add other kinds of data
-- Fix date lables
 - Tidy up web page
 - Minimize jar size
 

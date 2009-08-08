@@ -1,7 +1,60 @@
 <html>
-  <head><title>Unemployment Explorer</title></head>
+  <head>
+    <title>Unemployment Explorer</title>
+    <style type="text/css">
+      body {
+        font-family: Verdana, Helvetica, Arial, sans-serif;
+        font-size: 11px;
+      }
+      h1 {
+        font-size: 12px;
+        background: #bbf;
+        text-align: center;
+      }
+      div {
+        width: 30em;
+        background: #ffb;
+      }
+      p {
+        padding: 0 1em;
+      }
+    </style>
+  </head>
+  <script type="text/javascript">
+    function doabout(v)
+    {       
+      document.getElementById('about').style.display = v ? "" : "none";
+      document.getElementById('aboutlink').style.display = v ? "none" : "";
+    }
+  </script>
   <body>
-    <applet code="net.n01se.unemployment_explorer" archive="unempexp.jar" width="500" height="500">
+    <a href="#" onclick="doabout(true)" id="aboutlink" style="display:none">
+      About Unemployment Explorer</a>
+    <div id="about">
+      <h1>About Unemployment Explorer
+        <a href="#" onclick="doabout(false)">[hide about]</a>
+      </h1>
+      <p>
+      This is an interactive chart of unemployment rates by state, going back to
+      1976.  Check the boxes next to the states you want to compare.  Then you
+      may also choose a baseline, and the unemployment rates of the other states
+      will be shown as a percentage of the baseline state.  That is if Wyoming
+      is your baseline, you can see that in 1977 Arizona reached an unemployment
+      rate of nearly 4 times that of Wymoing (400%).  This can give unexpected
+      insight into regional, seasonal, and historic factors.
+      </p>
+      
+      <p>
+      This program can either be used below or <a href="unempexp.jar">
+        downloaded</a> as a standalone app -- either way requires that you have
+      Java 6 installed on your computer.  The program has the ability to fetch
+      updated data from data.gov (data.bls.gov) but there's no UI or button to
+      trigger this yet -- the chart you see is based on cached data.
+      </p>
+
+      <p>by <a href="http://chouser.n01se.net/">Chouser</a>, 2009</p>
+    </div>
+    <applet code="net.n01se.unemployment_explorer" archive="unempexp.jar" width="700px" height="800px">
     </applet>
   </body>
 </html>
