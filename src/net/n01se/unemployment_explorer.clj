@@ -210,6 +210,7 @@
   "Standalone app entrypoint."
   []
   (doto (JFrame. "Unemployment Explorer")
+    (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
     (.setContentPane (ui))
     .pack
     (.setVisible true)))

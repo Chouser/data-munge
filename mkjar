@@ -11,4 +11,4 @@ cp -a ../clojure/src/clj/clojure/version.properties classes/clojure
 for jar in ${JARS//:/ }; do 
     ( cd classes && jar xf $jar )
 done
-jar cf unempexp.jar -C classes/ .
+jar cmf manifest.mf unempexp.jar -C classes/ .
