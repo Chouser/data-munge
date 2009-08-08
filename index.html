@@ -25,14 +25,15 @@
     {       
       document.getElementById('about').style.display = v ? "" : "none";
       document.getElementById('aboutlink').style.display = v ? "none" : "";
+      return false;
     }
   </script>
   <body>
-    <a href="#" onclick="doabout(true)" id="aboutlink" style="display:none">
-      About <i>Jobless</i></a>
+    <a href="#" onclick="return doabout(true)" id="aboutlink"
+      style="display:none">About <i>Jobless</i></a>
     <div id="about">
       <h1>About <i>Jobless</i>
-        <a href="#" onclick="doabout(false)">[hide about]</a>
+        <a href="#" onclick="return doabout(false)">[hide about]</a>
       </h1>
       <p>
       This is an interactive chart of unemployment rates by state, going back to
