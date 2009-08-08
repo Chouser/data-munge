@@ -2,12 +2,14 @@
 (ns net.n01se.unemployment-explorer
   (:import (java.net URL)
            (java.util.regex Pattern)
+           (java.text SimpleDateFormat)
            (java.awt Point Graphics Color Container GridBagLayout
                      GridBagConstraints)
            (java.awt.geom AffineTransform)
            (javax.swing JFrame JCheckBox JComboBox JLabel)
            (java.awt.event ActionListener)
-           (org.jfree.chart ChartPanel))
+           (org.jfree.chart ChartPanel)
+           (org.jfree.data.time Month))
   (:use [clojure.contrib.str-utils2 :as str2 :only ()]
         [clojure.contrib.seq-utils :only (indexed)]
         [com.markmfredrickson.dejcartes :as chart :only ()])
@@ -120,6 +122,12 @@
 (defn area-num [data]
   (zipmap (:areas data) (iterate inc 0)))
 
+(def #^SimpleDateFormat month-fmt (SimpleDateFormat. "yyyy MMM"))
+
+(defn str-to-Month [string]
+  (let [date (.parse month-fmt string)]
+    (Month. (inc (.getMonth date)) (+ 1900 (.getYear date)))))
+
 (defn make-chart [data]
   (let [base-num ((area-num data) @baseline)
         scale-title (if base-num (str "Percentage of " @baseline) "Rate %")
@@ -129,11 +137,12 @@
                             (map (vec (:areas data)) @areas-shown)
                             (map #(if base (/ % base 0.01) %)
                                 (map (vec area-values) @areas-shown)))))]
-      (chart/line
+      (chart/time-series-chart
         "Unemployment" "Date" scale-title
         (apply array-map
-               (interleave (:periods data)
-                           (apply map filter-area baserate (:grid data))))))))
+               (interleave (:areas data)
+                           (map #(map vector (map str-to-Month (:periods data)) %)
+                                (:grid data))))))))
 
 (defn toggle [i txt show data #^ChartPanel chart-panel #^JComboBox cbox]
   (dosync

@@ -114,3 +114,80 @@ index bfba68c..a58c2bc 100644
 -- 
 1.6.0.4
 
+
+From cf209970747193dc593d5b1b2842355ce5331d6f Mon Sep 17 00:00:00 2001
+From: Chouser <chouser@n01se.net>
+Date: Fri, 7 Aug 2009 22:37:09 -0400
+Subject: [PATCH] Add time-series-chart
+
+---
+ src/com/markmfredrickson/dejcartes.clj |   46 +++++++++++++++++++++++++++++++-
+ 1 files changed, 45 insertions(+), 1 deletions(-)
+
+diff --git a/src/com/markmfredrickson/dejcartes.clj b/src/com/markmfredrickson/dejcartes.clj
+index a58c2bc..0e2bff6 100644
+--- a/src/com/markmfredrickson/dejcartes.clj
++++ b/src/com/markmfredrickson/dejcartes.clj
+@@ -23,7 +23,9 @@
+     (org.jfree.chart.plot PlotOrientation)
+     (org.jfree.data.category CategoryDataset DefaultCategoryDataset)
+     (org.jfree.data.general DefaultPieDataset PieDataset)
+-    (org.jfree.data.xy XYDataset XYSeries XYSeriesCollection)))
++    (org.jfree.data.xy XYDataset XYSeries XYSeriesCollection)
++    (org.jfree.data.time RegularTimePeriod TimeSeries TimeSeriesCollection
++                         Month Day)))
+ 
+ ; Functions to wrap:
+ ; createPieChart (for previous data set)
+@@ -232,6 +234,48 @@
+       (xy-bar "title" "x axis" false "y axis" xy-data)
+       (histogram "title" "x axis" "y axis" xy-data))))
+ 
++(defn- time-series
++  "Internal function to make an TimeSeries out of a title and seq"
++  ([title sequence]
++   (time-series title (or (class (ffirst sequence)) Day) sequence))
++  ([title cls sequence]
++    (let [times (new TimeSeries title cls)]
++      (doseq [pair sequence]
++        (.add times #^RegularTimePeriod (first pair) #^Number (second pair)))
++      times))
++  {:test (fn []
++    (is (instance? TimeSeries (time-series :title [[(Month. 1 2009) 2]
++                                                   [(Month. 3 2009) 4]
++                                                   [(Month. 4 2009) 5]]))))})
++
++(defn- time-series-collection
++  "Internal function to convert a set of seqs into xy pair sequences"
++  ([seqs]
++   (let [ds (new TimeSeriesCollection)]
++     (doseq [[title series] seqs]
++       (.addSeries ds (time-series title series)))
++     ds))
++  {:test (fn []
++    (is
++      (instance?
++        XYDataset
++        (time-series-collection {"Series 1" [[(Month. 1 2009) 2]
++                                             [(Month. 2 2009) 2]
++                                             [(Month. 4 2009) 4]]
++                                 "Series 2" [[(Month. 2 2009) 10]
++                                             [(Month. 4 2009) 8]
++                                             [(Month. 7 2009) 7]]}))))})
++
++(defn time-series-chart [title x-title y-title data]
++  (ChartFactory/createTimeSeriesChart
++    title
++    x-title
++    y-title
++    (time-series-collection data)
++    *legend*
++    *tooltips*
++    *urls*))
++
+ ;;; Agents for viewing charts
+ (with-test
+   (defn view [title chart]
+-- 
+1.6.0.4
+
