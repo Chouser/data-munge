@@ -1,5 +1,5 @@
 (set! *warn-on-reflection* true)
-(ns net.n01se.unemployment-explorer
+(ns net.n01se.jobless
   (:import (java.net URL)
            (java.util.regex Pattern)
            (java.text SimpleDateFormat)
@@ -137,7 +137,7 @@
                  (fn [month value base] [month (/ value base 0.01)])
                  (fn [month value base] [month value]))]
     (chart/time-series-chart
-      "Unemployment" nil scale-title
+      "Jobless" nil scale-title
       (apply array-map
               (interleave (map (vec (:areas data)) @areas-shown)
                           (map #(map rebase months % baserate)
@@ -209,7 +209,7 @@
 (defn -main
   "Standalone app entrypoint."
   []
-  (doto (JFrame. "Unemployment Explorer")
+  (doto (JFrame. "Jobless")
     (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
     (.setContentPane (ui))
     .pack

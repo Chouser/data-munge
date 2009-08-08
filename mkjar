@@ -4,11 +4,11 @@ CP=../clojure/clojure.jar:../clojure-contrib/src:src:classes:../../build/dejcart
 
 mkdir -p classes
 rm -r classes/*
-java -cp $CP -Dclojure.compile.path=classes clojure.lang.Compile net.n01se.unemployment-explorer
+java -cp $CP -Dclojure.compile.path=classes clojure.lang.Compile net.n01se.jobless
 cp -a data.clj classes
 cp -a ../clojure/classes/clojure classes
 cp -a ../clojure/src/clj/clojure/version.properties classes/clojure
 for jar in ${JARS//:/ }; do 
     ( cd classes && jar xf $jar )
 done
-jar cmf manifest.mf unempexp.jar -C classes/ .
+jar cmf manifest.mf jobless.jar -C classes/ .
